@@ -100,6 +100,23 @@
     </div>
   </section>
 
+  <!-- Streak Calendar -->
+  <section class="bg-white rounded-3xl p-5 shadow-sm border border-surface-container">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-base font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-rounded text-primary fill-1">local_fire_department</span>
+        <span id="streak-label">— Ngày liên tiếp!</span>
+      </h3>
+      <span class="text-xs text-secondary font-semibold">Tiếp tục nào!</span>
+    </div>
+    <div id="streak-calendar" class="flex justify-between items-center bg-background p-3 rounded-2xl"></div>
+    <button id="checkin-btn" onclick="doCheckin()"
+      class="w-full mt-4 py-3 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-primary/20">
+      <span class="material-symbols-rounded fill-1">where_to_vote</span>
+      <span id="checkin-text">Điểm danh hôm nay (+50 SC)</span>
+    </button>
+  </section>
+
   <!-- Stores Header -->
   <div class="flex items-center justify-between">
     <h3 class="text-lg font-bold text-on-surface">Cửa hàng gần bạn</h3>
@@ -109,47 +126,31 @@
   </div>
 
   <!-- Store List -->
-  <section id="store-list" class="space-y-4">
+  <section id="store-list" class="grid grid-cols-2 gap-3">
     <!-- Rendered by JS -->
   </section>
 
   <!-- Promotions -->
-  <section class="mt-8 pb-10">
+  <section class="pb-10">
     <h3 class="text-lg font-bold text-on-surface mb-4">Ưu đãi độc quyền</h3>
-    <div class="flex gap-4 overflow-x-auto pb-4 -mx-5 px-5 snap-x no-scrollbar">
-      <div class="flex-shrink-0 w-72 snap-center">
-        <div class="h-40 rounded-2xl bg-tertiary relative overflow-hidden flex items-end p-4">
-          <img class="absolute inset-0 w-full h-full object-cover opacity-80"
-               src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnyRS4SGqT2Fc1BHurkA3_3Fr97hZnz1UuJPdUW2rQ1K4Cs8Ab1BfVQieeOfDHB3h4kUZXn0XAtF7h4J5ZHz80h84rdSrx96QxuLSYbGlPXe2nUyP5Wsey2COsw_tBSGZY4M_DMjUzxgHbTVBSoIWEFNAzB6_ky4Ar0hGo1p8-Ix1THhjZVLypeiLmmgHDMSBCsbN605MyEThC2rKPJofprquUVuCa_vJMEv2d6DIex9i-Si513YZEZy6YW3m7rdnEOmu1ATtBhSQ"
-               alt="" onerror="this.style.display='none'">
-          <div class="relative z-10 glass-card p-3 rounded-xl w-full">
-            <p class="text-[10px] font-bold text-primary uppercase">Mới!</p>
-            <p class="text-sm font-semibold text-on-surface">Kem dâu tây mát lạnh</p>
-          </div>
-        </div>
-      </div>
-      <div class="flex-shrink-0 w-72 snap-center">
-        <div class="h-40 rounded-2xl bg-secondary relative overflow-hidden flex items-end p-4">
-          <img class="absolute inset-0 w-full h-full object-cover opacity-80"
-               src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnAn4UHOuKmkidtjvxwF9XAwZMSUDvr6N_uk2JMife-Xjsqh5WDB2MRuPXfFAuxvlv8CiYpM0jreEpzJur0KEoaEdn2aWQPYBNbh3rtptc9S_DTcyywbbgfHG1bxpqR-AZg_IA--NnwSzRPxvP7PhVkUajxHy0YwvMMo0DMdfc_6qfChv_tDyozO6dMvDTX-TibPdn2gPxuCglrEfJye6c9LVPRcmssO8A5gWuOvM-zBODcZM3maZUHaeq5XHyEiBEvf6LwfgP6fk"
-               alt="" onerror="this.style.display='none'">
-          <div class="relative z-10 glass-card p-3 rounded-xl w-full">
-            <p class="text-[10px] font-bold text-primary uppercase">Deal Hot</p>
-            <p class="text-sm font-semibold text-on-surface">Mua 2 Tặng 1 Trà Sữa</p>
-          </div>
-        </div>
-      </div>
-      <div class="flex-shrink-0 w-72 snap-center">
-        <div class="h-40 rounded-2xl bg-primary/80 relative overflow-hidden flex items-end p-4">
-          <div class="relative z-10 glass-card p-3 rounded-xl w-full">
-            <p class="text-[10px] font-bold text-primary uppercase">Tuần này</p>
-            <p class="text-sm font-semibold text-on-surface">Ghé 3 ngày nhận thưởng 150 SC</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id="events-list" class="flex gap-4 overflow-x-auto pb-4 -mx-5 px-5 snap-x no-scrollbar"></div>
   </section>
 </main>
+
+<!-- Event Detail Modal -->
+<div id="event-modal" class="fixed inset-0 z-[200] hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeEvent()"></div>
+  <div class="absolute inset-x-5 bottom-8 bg-white rounded-3xl p-6 shadow-2xl">
+    <button onclick="closeEvent()" class="absolute top-4 right-4 p-1 text-secondary">
+      <span class="material-symbols-rounded">close</span>
+    </button>
+    <div id="modal-tag" class="text-[10px] font-bold uppercase mb-1"></div>
+    <h3 id="modal-title" class="text-lg font-bold text-on-surface mb-2"></h3>
+    <p id="modal-desc" class="text-sm text-secondary leading-relaxed mb-6"></p>
+    <a id="modal-cta" href="#"
+      class="block w-full py-3 bg-primary text-white font-bold rounded-full text-center active:scale-95 transition-transform shadow-md shadow-primary/20"></a>
+  </div>
+</div>
 
 <!-- Bottom Nav -->
 <nav class="fixed bottom-0 w-full flex justify-around items-center px-4 py-2 pb-safe bg-surface shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 rounded-t-xl">
@@ -197,30 +198,22 @@
   ];
 
   function storeCard(store, traffic) {
-    return `
-      <a href="chi tiết cửa hàng.html?store=${store.id}" class="block">
-        <div class="bg-white rounded-2xl p-4 flex gap-4 shadow-sm border border-surface-container hover:shadow-md transition-shadow">
-          <div class="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container">
-            <img class="w-full h-full object-cover" src="${store.img}" alt="${store.name}"
-                 onerror="this.parentElement.style.background='#e8eff1';this.remove()">
-          </div>
-          <div class="flex-1 flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between">
-                <span class="text-base font-semibold text-on-surface">${store.name}</span>
-                <span class="text-xs font-bold text-secondary">${store.dist}</span>
-              </div>
-              <p class="text-xs text-on-surface-variant">${store.addr}</p>
-            </div>
-            <div class="flex items-center gap-2 mt-2">
-              <div class="h-2 w-2 rounded-full ${traffic.dot} status-dot"></div>
-              <span class="text-xs font-semibold ${traffic.text}">${traffic.label}</span>
-              <span class="mx-1 text-surface-variant">|</span>
-              <span class="text-xs text-on-surface-variant">${store.hours}</span>
-            </div>
+    return `<a href="chi tiết cửa hàng.html?store=${store.id}" class="block">
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-surface-container active:scale-[0.98] transition-transform">
+        <div class="h-24 bg-surface-container relative">
+          <img class="w-full h-full object-cover" src="${store.img}" alt="${store.name}"
+               onerror="this.parentElement.style.background='#e8eff1';this.remove()">
+          <span class="absolute bottom-2 right-2 text-[10px] font-bold bg-white/90 backdrop-blur px-2 py-0.5 rounded-full text-primary">${store.dist}</span>
+        </div>
+        <div class="p-3">
+          <p class="text-xs font-bold text-on-surface truncate">${store.name}</p>
+          <div class="flex items-center gap-1 mt-1">
+            <div class="h-1.5 w-1.5 rounded-full ${traffic.dot} flex-shrink-0"></div>
+            <span class="text-[10px] ${traffic.text} truncate">${traffic.label}</span>
           </div>
         </div>
-      </a>`;
+      </div>
+    </a>`;
   }
 
   function getGreeting(hour, name) {
@@ -229,6 +222,136 @@
     if (hour >= 13 && hour < 18) return `Chào buổi chiều, ${name} ơi!`;
     return `Chào buổi tối, ${name} ơi!`;
   }
+
+  let currentUid = null;
+  let currentCoins = 0;
+
+  function renderStreakCalendar(visitDates, streak) {
+    const today = new Date();
+    const dayIdx = (today.getDay() + 6) % 7; // Mon=0, Sun=6
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - dayIdx);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const str = d.toISOString().split('T')[0];
+      const isToday = d.toDateString() === today.toDateString();
+      const isFuture = d > today;
+      days.push({ label: ['T2','T3','T4','T5','T6','T7','CN'][i], date: str,
+                  visited: visitDates.includes(str), isToday, isFuture });
+    }
+    document.getElementById('streak-label').textContent = `${streak} Ngày liên tiếp!`;
+    document.getElementById('streak-calendar').innerHTML = days.map(d => `
+      <div class="flex flex-col items-center gap-2">
+        <span class="text-xs font-bold ${d.isToday ? 'text-primary' : 'text-secondary'}">${d.label}</span>
+        <div class="w-9 h-9 rounded-full flex items-center justify-center
+          ${d.visited ? 'bg-primary text-white shadow-md' :
+            d.isToday ? 'border-2 border-dashed border-primary animate-pulse' :
+            d.isFuture ? 'bg-surface-container/50 text-secondary/40' : 'bg-surface-container text-secondary'}">
+          ${d.visited ? '<span class="material-symbols-rounded text-sm fill-1">check</span>'
+            : d.isToday ? '<span class="text-xs font-bold text-primary">?</span>'
+            : d.isFuture ? '<span class="text-xs text-secondary/40">·</span>'
+            : '<span class="text-xs">—</span>'}
+        </div>
+      </div>`).join('');
+  }
+
+  async function doCheckin() {
+    const btn = document.getElementById('checkin-btn');
+    const txt = document.getElementById('checkin-text');
+    btn.disabled = true;
+    txt.textContent = 'Đang điểm danh...';
+    try {
+      const newStreak = await recordVisit(currentUid);
+      if (newStreak === undefined) {
+        showToast('Bạn đã điểm danh hôm nay rồi! 😊', 'info');
+        btn.classList.replace('bg-primary', 'bg-secondary');
+        btn.classList.add('opacity-60');
+        txt.textContent = 'Đã điểm danh hôm nay ✓';
+        return;
+      }
+      await awardCoins(currentUid, 50, 'Điểm danh hôm nay ✓');
+      currentCoins += 50;
+      document.getElementById('coins-display').textContent = currentCoins.toLocaleString('vi-VN');
+      document.getElementById('streak-count').textContent = newStreak;
+      const data = await getUserData(currentUid);
+      renderStreakCalendar(data?.visitDates ?? [], data?.streak ?? newStreak);
+      showToast(`+50 SC! Chuỗi ${data?.streak ?? newStreak} ngày 🔥`, 'success');
+      btn.classList.replace('bg-primary', 'bg-secondary');
+      btn.classList.add('opacity-60');
+      btn.disabled = true;
+      txt.textContent = 'Đã điểm danh hôm nay ✓';
+    } catch (e) {
+      showToast(e.message || 'Điểm danh thất bại', 'error');
+      btn.disabled = false;
+      txt.textContent = 'Điểm danh hôm nay (+50 SC)';
+    }
+  }
+
+  const EVENTS = [
+    { tag: 'Mới!', tagColor: 'text-green-600', bg: 'bg-tertiary',
+      title: 'Kem dâu tây mát lạnh',
+      desc: 'Thưởng thức vị kem dâu tây tươi mới chỉ có tại Mixue GO! Ưu đãi đặc biệt: mua 1 tặng 1 trong tuần này tại tất cả cửa hàng.',
+      cta: 'Xem cửa hàng gần nhất', href: 'bản đồ chỉ đường.html',
+      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnyRS4SGqT2Fc1BHurkA3_3Fr97hZnz1UuJPdUW2rQ1K4Cs8Ab1BfVQieeOfDHB3h4kUZXn0XAtF7h4J5ZHz80h84rdSrx96QxuLSYbGlPXe2nUyP5Wsey2COsw_tBSGZY4M_DMjUzxgHbTVBSoIWEFNAzB6_ky4Ar0hGo1p8-Ix1THhjZVLypeiLmmgHDMSBCsbN605MyEThC2rKPJofprquUVuCa_vJMEv2d6DIex9i-Si513YZEZy6YW3m7rdnEOmu1ATtBhSQ' },
+    { tag: 'Deal Hot', tagColor: 'text-primary', bg: 'bg-secondary',
+      title: 'Mua 2 Tặng 1 Trà Sữa',
+      desc: 'Áp dụng từ Thứ Hai đến Thứ Sáu hàng tuần, mọi size. Mua 2 ly trà sữa bất kỳ, nhận ngay 1 ly kem miễn phí. Dùng mã MIXUEGO2 tại quầy!',
+      cta: 'Tích điểm ngay', href: 'tích điểm.html',
+      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCnAn4UHOuKmkidtjvxwF9XAwZMSUDvr6N_uk2JMife-Xjsqh5WDB2MRuPXfFAuxvlv8CiYpM0jreEpzJur0KEoaEdn2aWQPYBNbh3rtptc9S_CTcyywbbgfHG1bxpqR-AZg_IA--NnwSzRPxvP7PhVkUajxHy0YwvMMo0DMdfc_6qfChv_tDyozO6dMvDTX-TibPdn2gPxuCglrEfJye6c9LVPRcmssO8A5gWuOvM-zBODcZM3maZUHaeq5XHyEiBEvf6LwfgP6fk' },
+    { tag: 'Thử thách', tagColor: 'text-orange-600', bg: 'bg-primary/80',
+      title: 'Ghé 3 ngày nhận 150 SC',
+      desc: 'Check-in tại bất kỳ cửa hàng Mixue GO nào 3 ngày trong tuần này để nhận ngay 150 Snow Coins thưởng vào tài khoản của bạn!',
+      cta: 'Điểm danh hôm nay', href: '#checkin',
+      img: '' },
+    { tag: 'Cộng đồng', tagColor: 'text-blue-600', bg: 'bg-tertiary-fixed',
+      title: 'Tuần lễ Snow King',
+      desc: 'Tham gia cùng hàng nghìn bạn trẻ Hà Nội trong sự kiện Tuần lễ Snow King! Check-in và chia sẻ khoảnh khắc để nhận quà đặc biệt.',
+      cta: 'Xem chi tiết', href: 'cộng đồng&thử thách.html',
+      img: '' },
+  ];
+
+  function renderEvents() {
+    document.getElementById('events-list').innerHTML = EVENTS.map((e, i) => `
+      <div onclick="openEvent(${i})" class="flex-shrink-0 w-60 snap-center cursor-pointer active:scale-[0.98] transition-transform">
+        <div class="h-36 rounded-2xl ${e.bg} relative overflow-hidden flex items-end p-4">
+          ${e.img ? `<img class="absolute inset-0 w-full h-full object-cover opacity-80" src="${e.img}" onerror="this.style.display='none'">` : ''}
+          <div class="relative z-10 glass-card p-3 rounded-xl w-full">
+            <p class="text-[10px] font-bold ${e.tagColor} uppercase">${e.tag}</p>
+            <p class="text-sm font-semibold text-on-surface">${e.title}</p>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function openEvent(i) {
+    const e = EVENTS[i];
+    const tagEl = document.getElementById('modal-tag');
+    tagEl.textContent = e.tag;
+    tagEl.className = `text-[10px] font-bold uppercase mb-1 ${e.tagColor}`;
+    document.getElementById('modal-title').textContent = e.title;
+    document.getElementById('modal-desc').textContent = e.desc;
+    const cta = document.getElementById('modal-cta');
+    cta.textContent = e.cta;
+    if (e.href === '#checkin') {
+      cta.removeAttribute('href');
+      cta.onclick = () => {
+        closeEvent();
+        document.getElementById('checkin-btn')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+    } else {
+      cta.href = e.href;
+      cta.onclick = null;
+    }
+    document.getElementById('event-modal').classList.remove('hidden');
+  }
+
+  function closeEvent() {
+    document.getElementById('event-modal').classList.add('hidden');
+  }
+
+  renderEvents();
 
   (async () => {
     // ── Step 1: Auth ──────────────────────────────────────────────────────────
@@ -249,7 +372,7 @@
     try {
       const traffic = getTrafficLevel(hour);
       document.getElementById('store-list').innerHTML =
-        STORES.map(s => storeCard(s, traffic)).join('');
+        STORES.slice(0, 4).map(s => storeCard(s, traffic)).join('');
     } catch (e) { console.warn('store render failed', e); }
 
     // ── Step 3b: Update distances from real location if permitted ─────────────
@@ -262,7 +385,7 @@
         });
         STORES.sort((a, b) => (a.distKm ?? 999) - (b.distKm ?? 999));
         document.getElementById('store-list').innerHTML =
-          STORES.map(s => storeCard(s, traffic)).join('');
+          STORES.slice(0, 4).map(s => storeCard(s, traffic)).join('');
       }, () => {}); // silent — keep hardcoded fallback on denial
     }
 
@@ -283,7 +406,21 @@
       document.getElementById('user-name').textContent = '';
     } catch (e) { console.warn('greeting update failed', e); }
 
-    // ── Step 5: Notifications ─────────────────────────────────────────────────
+    // ── Step 5: Streak calendar ───────────────────────────────────────────────
+    currentUid = uid;
+    currentCoins = coins;
+    const visitDates = data?.visitDates ?? [];
+    renderStreakCalendar(visitDates, data?.streak ?? 0);
+    const todayISO = new Date().toISOString().split('T')[0];
+    if (visitDates.includes(todayISO)) {
+      const btn = document.getElementById('checkin-btn');
+      btn.classList.replace('bg-primary', 'bg-secondary');
+      btn.classList.add('opacity-60');
+      btn.disabled = true;
+      document.getElementById('checkin-text').textContent = 'Đã điểm danh hôm nay ✓';
+    }
+
+    // ── Step 6: Notifications ─────────────────────────────────────────────────
     try { await initNotificationDrawer(uid); } catch (e) { console.warn('notifications failed', e); }
     try { await checkAndCreateNotifications(uid, data || {}); } catch (e) {}
   })();
