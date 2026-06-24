@@ -180,6 +180,21 @@
   });
 
   let activeStoreId = null;
+  let userMarker = null;
+
+  function setUserMarker(lat, lng) {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:18px;height:18px;background:#1d6bf3;border:3px solid white;border-radius:50%;box-shadow:0 0 0 5px rgba(29,107,243,0.22)"></div>`,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    });
+    if (userMarker) {
+      userMarker.setLatLng([lat, lng]);
+    } else {
+      userMarker = L.marker([lat, lng], { icon, zIndexOffset: 1000 }).addTo(map);
+    }
+  }
 
   function openSheet(store) {
     activeStoreId = store.id;
@@ -258,6 +273,7 @@
       navigator.geolocation.getCurrentPosition(p => {
         const { latitude, longitude } = p.coords;
         map.flyTo([latitude, longitude], 15, { duration:0.8 });
+        setUserMarker(latitude, longitude);
         updateDistancesFromCoords(latitude, longitude);
       }, () => map.flyTo([21.0285,105.8542], 13, { duration:0.8 }));
     }
@@ -266,7 +282,10 @@
   // Passive live tracking — updates distances as user moves
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition(
-      ({ coords }) => updateDistancesFromCoords(coords.latitude, coords.longitude),
+      ({ coords }) => {
+        setUserMarker(coords.latitude, coords.longitude);
+        updateDistancesFromCoords(coords.latitude, coords.longitude);
+      },
       () => {}
     );
   }
