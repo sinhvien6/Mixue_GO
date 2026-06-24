@@ -111,6 +111,28 @@
     </div>
   </section>
 
+  <!-- Streak Detail Card -->
+  <section class="glass-card rounded-2xl p-4 mb-6 fade-in-up">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-rounded text-primary fill-1">local_fire_department</span>
+        <span class="text-sm font-bold text-on-surface">Chuỗi check-in</span>
+      </div>
+      <span class="text-xs font-bold bg-primary/10 text-primary px-3 py-1 rounded-full" id="streak-label">— ngày</span>
+    </div>
+    <div class="flex justify-between gap-1.5 mb-1" id="streak-calendar"></div>
+    <div class="flex justify-between text-[10px] text-on-secondary-container mt-2">
+      <span>Kỷ lục: <span id="best-streak-val" class="font-bold text-on-surface">—</span> ngày</span>
+      <span>Ghé hàng ngày để duy trì chuỗi! 🎁</span>
+    </div>
+  </section>
+
+  <!-- Achievements -->
+  <section class="mb-6">
+    <h3 class="text-sm font-bold text-on-secondary-container uppercase tracking-wider mb-3">Thành tích</h3>
+    <div class="grid grid-cols-3 gap-2" id="achievements-grid"></div>
+  </section>
+
   <!-- Referral Card -->
   <section class="bg-gradient-to-r from-primary to-primary-container rounded-2xl p-4 mb-6 text-white shadow-lg">
     <div class="flex items-center justify-between">
@@ -276,6 +298,49 @@
     }
   }
 
+  function renderStreakCalendar(streak, bestStreak) {
+    document.getElementById('streak-label').textContent = `${streak} ngày`;
+    document.getElementById('best-streak-val').textContent = bestStreak || streak || 0;
+    const days = ['T2','T3','T4','T5','T6','T7','CN'];
+    const todayIdx = (new Date().getDay() + 6) % 7;
+    document.getElementById('streak-calendar').innerHTML = days.map((d, i) => {
+      const daysAgo = (todayIdx - i + 7) % 7;
+      const active  = daysAgo < streak;
+      const isToday = daysAgo === 0;
+      return `<div class="flex-1 flex flex-col items-center gap-1">
+        <div class="w-full aspect-square rounded-full flex items-center justify-center text-[10px] font-bold
+          ${active ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'bg-surface-container text-on-secondary-container'}
+          ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}">
+          ${active ? '🔥' : '·'}
+        </div>
+        <span class="text-[9px] ${isToday ? 'font-bold text-primary' : 'text-on-secondary-container'}">${d}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const ACHIEVEMENTS = [
+    { icon:'storefront',        color:'text-green-600',  bg:'bg-green-50',  name:'Lần đầu ghé',      desc:'Check-in lần đầu',          unlock:(d)    => (d.streak||0) >= 1 || (d.snowCoins||0) > 0 },
+    { icon:'local_fire_department', color:'text-orange-500', bg:'bg-orange-50', name:'Chuỗi 3 ngày', desc:'3 ngày liên tiếp',          unlock:(d)    => (d.streak||0) >= 3 },
+    { icon:'whatshot',          color:'text-red-600',    bg:'bg-red-50',    name:'Tuần lửa 🔥',       desc:'Chuỗi 7 ngày',              unlock:(d)    => (d.streak||0) >= 7 },
+    { icon:'stars',             color:'text-yellow-600', bg:'bg-yellow-50', name:'500 Snow Coins',   desc:'Tích lũy 500 SC',           unlock:(d)    => (d.snowCoins||0) >= 500 },
+    { icon:'group_add',         color:'text-blue-600',   bg:'bg-blue-50',   name:'Người giới thiệu', desc:'Mời 1 bạn bè',              unlock:(d,fc) => fc >= 1 },
+    { icon:'emoji_events',      color:'text-purple-600', bg:'bg-purple-50', name:'Huyền thoại',      desc:'Chuỗi 30 ngày',             unlock:(d)    => (d.streak||0) >= 30 },
+  ];
+
+  function renderAchievements(data, friendCount) {
+    document.getElementById('achievements-grid').innerHTML = ACHIEVEMENTS.map(a => {
+      const earned = a.unlock(data, friendCount);
+      return `<div class="rounded-xl p-3 flex flex-col items-center gap-1.5 text-center
+        ${earned ? a.bg + ' border border-current/10' : 'bg-surface-container opacity-50'}">
+        <div class="w-10 h-10 rounded-full ${earned ? a.bg : 'bg-surface-container-high'} flex items-center justify-center">
+          <span class="material-symbols-rounded text-xl ${earned ? a.color + ' fill-1' : 'text-on-secondary-container'}">${a.icon}</span>
+        </div>
+        <p class="text-[10px] font-bold leading-tight ${earned ? 'text-on-surface' : 'text-on-secondary-container'}">${a.name}</p>
+        <p class="text-[9px] leading-tight ${earned ? 'text-on-secondary-container' : 'text-on-secondary-container/70'}">${earned ? a.desc : '🔒 ' + a.desc}</p>
+      </div>`;
+    }).join('');
+  }
+
   (async () => {
     const user = await authGuard();
     currentUid  = user.uid;
@@ -300,6 +365,9 @@
     // Count friends who used this referral code
     const friendsSnap = await db.collection('users').where('referredBy', '==', currentCode).get();
     document.getElementById('referral-friends').textContent = `Đã giới thiệu: ${friendsSnap.size} bạn bè`;
+
+    renderStreakCalendar(streak, data?.bestStreak);
+    renderAchievements(data || {}, friendsSnap.size);
 
     await initNotificationDrawer(user.uid);
     await checkAndCreateNotifications(user.uid, data || {});
