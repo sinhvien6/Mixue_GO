@@ -95,41 +95,27 @@
         <span class="material-symbols-rounded text-[80px]">icecream</span>
       </div>
     </div>
-    <div class="glass-card rounded-xl p-4 flex flex-col justify-between aspect-square active:scale-[0.98] transition-transform fade-in-up">
+    <div class="glass-card rounded-xl p-3 flex items-center gap-3 fade-in-up">
       <span class="material-symbols-rounded text-primary fill-1">local_fire_department</span>
       <div>
         <p class="text-[10px] font-bold text-on-secondary-container">Chuỗi hiện tại</p>
-        <h4 id="streak-stat" class="text-xl font-bold text-on-surface">— ngày</h4>
+        <h4 id="streak-stat" class="text-lg font-bold text-on-surface">— ngày</h4>
       </div>
     </div>
-    <div class="glass-card rounded-xl p-4 flex flex-col justify-between aspect-square active:scale-[0.98] transition-transform fade-in-up">
-      <span class="material-symbols-rounded text-tertiary">military_tech</span>
-      <div>
-        <p class="text-[10px] font-bold text-on-secondary-container">Huy hiệu</p>
-        <h4 id="badges-stat" class="text-xl font-bold text-on-surface">—</h4>
+    <div onclick="toggleAchievements()" class="glass-card rounded-xl p-3 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform fade-in-up">
+      <div id="ach-icon-wrap" class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center flex-shrink-0">
+        <span id="ach-icon" class="material-symbols-rounded text-on-secondary-container text-base">emoji_events</span>
       </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-bold text-on-secondary-container">Thành tích</p>
+        <p id="ach-name" class="text-xs font-bold text-on-surface truncate">—</p>
+      </div>
+      <span id="ach-chevron" class="material-symbols-rounded text-on-secondary-container text-sm">expand_more</span>
     </div>
   </section>
 
-  <!-- Streak Detail Card -->
-  <section class="glass-card rounded-2xl p-4 mb-6 fade-in-up">
-    <div class="flex items-center justify-between mb-3">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-rounded text-primary fill-1">local_fire_department</span>
-        <span class="text-sm font-bold text-on-surface">Chuỗi check-in</span>
-      </div>
-      <span class="text-xs font-bold bg-primary/10 text-primary px-3 py-1 rounded-full" id="streak-label">— ngày</span>
-    </div>
-    <div class="flex justify-between gap-1.5 mb-1" id="streak-calendar"></div>
-    <div class="flex justify-between text-[10px] text-on-secondary-container mt-2">
-      <span>Kỷ lục: <span id="best-streak-val" class="font-bold text-on-surface">—</span> ngày</span>
-      <span>Ghé hàng ngày để duy trì chuỗi! 🎁</span>
-    </div>
-  </section>
-
-  <!-- Achievements -->
-  <section class="mb-6">
-    <h3 class="text-sm font-bold text-on-secondary-container uppercase tracking-wider mb-3">Thành tích</h3>
+  <!-- Achievements (hidden until tile is tapped) -->
+  <section id="achievements-section" class="mb-6 hidden">
     <div class="grid grid-cols-3 gap-2" id="achievements-grid"></div>
   </section>
 
@@ -298,24 +284,11 @@
     }
   }
 
-  function renderStreakCalendar(streak, bestStreak) {
-    document.getElementById('streak-label').textContent = `${streak} ngày`;
-    document.getElementById('best-streak-val').textContent = bestStreak || streak || 0;
-    const days = ['T2','T3','T4','T5','T6','T7','CN'];
-    const todayIdx = (new Date().getDay() + 6) % 7;
-    document.getElementById('streak-calendar').innerHTML = days.map((d, i) => {
-      const daysAgo = (todayIdx - i + 7) % 7;
-      const active  = daysAgo < streak;
-      const isToday = daysAgo === 0;
-      return `<div class="flex-1 flex flex-col items-center gap-1">
-        <div class="w-full aspect-square rounded-full flex items-center justify-center text-[10px] font-bold
-          ${active ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'bg-surface-container text-on-secondary-container'}
-          ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}">
-          ${active ? '🔥' : '·'}
-        </div>
-        <span class="text-[9px] ${isToday ? 'font-bold text-primary' : 'text-on-secondary-container'}">${d}</span>
-      </div>`;
-    }).join('');
+  function toggleAchievements() {
+    const section = document.getElementById('achievements-section');
+    const chevron = document.getElementById('ach-chevron');
+    const isHidden = section.classList.toggle('hidden');
+    chevron.textContent = isHidden ? 'expand_more' : 'expand_less';
   }
 
   const ACHIEVEMENTS = [
@@ -328,17 +301,33 @@
   ];
 
   function renderAchievements(data, friendCount) {
-    document.getElementById('achievements-grid').innerHTML = ACHIEVEMENTS.map(a => {
-      const earned = a.unlock(data, friendCount);
-      return `<div class="rounded-xl p-3 flex flex-col items-center gap-1.5 text-center
-        ${earned ? a.bg + ' border border-current/10' : 'bg-surface-container opacity-50'}">
-        <div class="w-10 h-10 rounded-full ${earned ? a.bg : 'bg-surface-container-high'} flex items-center justify-center">
-          <span class="material-symbols-rounded text-xl ${earned ? a.color + ' fill-1' : 'text-on-secondary-container'}">${a.icon}</span>
+    const results    = ACHIEVEMENTS.map(a => ({ ...a, earned: a.unlock(data, friendCount) }));
+    const featured   = results.find(a => a.earned) || results[0];
+    const earnedCount = results.filter(a => a.earned).length;
+
+    // Update compact tile
+    const wrap = document.getElementById('ach-icon-wrap');
+    const icon = document.getElementById('ach-icon');
+    if (featured.earned) {
+      wrap.className = `w-8 h-8 rounded-full ${featured.bg} flex items-center justify-center flex-shrink-0`;
+      icon.className = `material-symbols-rounded ${featured.color} fill-1 text-base`;
+    }
+    icon.textContent = featured.icon;
+    document.getElementById('ach-name').textContent = earnedCount > 0
+      ? `${featured.name}${earnedCount > 1 ? ' +' + (earnedCount - 1) : ''}`
+      : 'Chưa có thành tích';
+
+    // Render full grid
+    document.getElementById('achievements-grid').innerHTML = results.map(a =>
+      `<div class="rounded-xl p-3 flex flex-col items-center gap-1.5 text-center
+        ${a.earned ? a.bg + ' border border-current/10' : 'bg-surface-container opacity-50'}">
+        <div class="w-10 h-10 rounded-full ${a.earned ? a.bg : 'bg-surface-container-high'} flex items-center justify-center">
+          <span class="material-symbols-rounded text-xl ${a.earned ? a.color + ' fill-1' : 'text-on-secondary-container'}">${a.icon}</span>
         </div>
-        <p class="text-[10px] font-bold leading-tight ${earned ? 'text-on-surface' : 'text-on-secondary-container'}">${a.name}</p>
-        <p class="text-[9px] leading-tight ${earned ? 'text-on-secondary-container' : 'text-on-secondary-container/70'}">${earned ? a.desc : '🔒 ' + a.desc}</p>
-      </div>`;
-    }).join('');
+        <p class="text-[10px] font-bold leading-tight ${a.earned ? 'text-on-surface' : 'text-on-secondary-container'}">${a.name}</p>
+        <p class="text-[9px] leading-tight ${a.earned ? 'text-on-secondary-container' : 'text-on-secondary-container/70'}">${a.earned ? a.desc : '🔒 ' + a.desc}</p>
+      </div>`
+    ).join('');
   }
 
   (async () => {
@@ -359,14 +348,12 @@
     document.getElementById('coins-display').textContent = coins.toLocaleString('vi-VN');
     document.getElementById('streak-count').textContent  = streak;
     document.getElementById('streak-stat').textContent   = `${streak} ngày`;
-    document.getElementById('badges-stat').textContent   = badges;
     document.getElementById('referral-code').textContent = currentCode;
 
     // Count friends who used this referral code
     const friendsSnap = await db.collection('users').where('referredBy', '==', currentCode).get();
     document.getElementById('referral-friends').textContent = `Đã giới thiệu: ${friendsSnap.size} bạn bè`;
 
-    renderStreakCalendar(streak, data?.bestStreak);
     renderAchievements(data || {}, friendsSnap.size);
 
     await initNotificationDrawer(user.uid);
