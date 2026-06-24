@@ -22,8 +22,7 @@ function authGuard() {
   return new Promise((resolve) => {
     auth.onAuthStateChanged((user) => {
       if (!user) {
-        const here = encodeURIComponent(location.pathname + location.search);
-        location.href = `đăng nhập.html?redirect=${here}`;
+        location.href = 'đăng nhập.html';
       } else {
         resolve(user);
       }
