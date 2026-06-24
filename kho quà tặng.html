@@ -1,0 +1,347 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+<title>Mixue GO - Quà tặng của tôi</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link rel="stylesheet" href="shared/styles.css">
+<!-- QR code library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: '#bb0013', 'primary-container': '#e71520', 'on-primary-container': '#fffbff',
+          'primary-fixed': '#ffdad6', 'on-primary': '#ffffff', 'on-primary-fixed-variant': '#93000d',
+          surface: '#f4fafd', 'surface-container': '#e8eff1', 'surface-container-lowest': '#ffffff',
+          'surface-container-high': '#e2e9ec', 'surface-container-highest': '#dde4e6',
+          'on-surface': '#161d1f', 'on-surface-variant': '#5e3f3c',
+          secondary: '#5d5f5f', 'on-secondary-container': '#616363',
+          tertiary: '#4c5f66', 'tertiary-container': '#65777f', 'tertiary-fixed': '#d2e6ef',
+          'outline-variant': '#e8bcb7', background: '#f4fafd',
+        },
+        fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+      }
+    }
+  };
+</script>
+<style>
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4fafd; }
+  .material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  .animate-float { animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .snow-pattern { background-image: radial-gradient(circle at 2px 2px, rgba(187,0,19,0.05) 1px, transparent 0); background-size: 24px 24px; }
+  .coupon-cutout { position: relative; }
+  .coupon-cutout::before { content:''; position:absolute; left:-8px; width:16px; height:16px; background:#f4fafd; border-radius:50%; z-index:10; top:calc(50% - 8px); }
+  .coupon-cutout::after  { content:''; position:absolute; right:-8px; width:16px; height:16px; background:#f4fafd; border-radius:50%; z-index:10; top:calc(50% - 8px); }
+</style>
+</head>
+<body class="bg-background text-on-surface snow-pattern min-h-screen pb-32">
+
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-40 bg-surface shadow-sm flex justify-between items-center px-5 py-2">
+  <div class="flex items-center gap-4">
+    <a href="tích điểm.html" class="material-symbols-rounded text-primary active:scale-95 transition-transform">arrow_back</a>
+    <h1 class="text-lg font-bold text-primary">Quà tặng của tôi</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2">
+      <button class="notif-bell relative p-2 rounded-full hover:bg-surface-container transition-colors">
+        <span class="material-symbols-rounded text-on-surface-variant">notifications</span>
+        <span class="notif-badge hidden">0</span>
+      </button>
+      <div class="bg-primary/10 px-3 py-1 rounded-full flex items-center gap-1">
+        <span class="material-symbols-rounded text-primary text-[18px] fill-1">local_fire_department</span>
+        <span id="streak-count" class="text-primary font-bold text-sm">—</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="px-5 pt-6 space-y-6">
+  <!-- Hero -->
+  <section class="flex flex-col items-center text-center py-4 bg-white/40 backdrop-blur-sm rounded-2xl border border-white">
+    <div class="w-36 h-36 animate-float">
+      <img class="w-full h-full object-contain"
+           src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1uNu6giz9PrFFiv7iMwQQu4ofZ4Mu1tQvqX0QbERj4HrWom1oj02plhIEg50C4nBRobXTcellRTmjP4lu4FTczsh1zVIHbuDEf51QpY8F3YubQksVzRa-qJ4-swzzGk3sqfRVDutr9R3tBCpKsmwYWrkiQFn-4QOO1s5eWy64tQrTe6VN0Gnpnz1G2nnMW8NHXksYmMwHl_7IjDxgfWYkvY37NpIK3YdVpuEr7fVx5DqdFTJnkBekmof-hKtkQqvft94N5BXGVaY"
+           alt="Snow King" onerror="this.parentElement.innerHTML='<span style=font-size:80px>🎁</span>'">
+    </div>
+    <p class="text-on-surface-variant text-sm mt-2">
+      Bạn có <span id="voucher-count" class="text-primary font-bold">—</span> voucher đang chờ sử dụng!
+    </p>
+  </section>
+
+  <!-- Active Vouchers -->
+  <section class="space-y-4">
+    <div class="flex justify-between items-center">
+      <h2 class="text-base font-bold text-on-surface">Voucher hiện có</h2>
+    </div>
+    <div id="voucher-list" class="space-y-4">
+      <div class="flex items-center justify-center py-8 text-secondary text-sm">Đang tải...</div>
+    </div>
+  </section>
+
+  <!-- Gift History -->
+  <section class="pt-2">
+    <button onclick="toggleHistory()" class="w-full py-4 flex justify-between items-center border-t border-outline-variant/30 group">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-rounded">history</span>
+        </div>
+        <div class="text-left">
+          <p class="font-semibold text-on-surface">Lịch sử quà tặng</p>
+          <p class="text-xs text-on-secondary-container">Xem các voucher đã dùng hoặc hết hạn</p>
+        </div>
+      </div>
+      <span id="history-chevron" class="material-symbols-rounded text-on-secondary-container transition-transform">chevron_right</span>
+    </button>
+    <div id="history-list" class="hidden space-y-3 pb-2">
+      <div class="flex items-center justify-center py-6 text-secondary text-sm">Đang tải...</div>
+    </div>
+  </section>
+
+  <!-- Promo bento -->
+  <section class="grid grid-cols-2 gap-4 pb-10">
+    <a href="tích điểm.html" class="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex flex-col justify-between h-40 overflow-hidden relative active:scale-95 transition-transform">
+      <p class="text-base font-bold text-primary relative z-10">Tích điểm<br>đổi quà</p>
+      <span class="material-symbols-rounded text-primary/20 text-6xl absolute -bottom-4 -right-4">stars</span>
+      <p class="text-[10px] text-primary font-bold z-10">XEM NGAY →</p>
+    </a>
+    <button onclick="shareReferral()" class="bg-surface-container-highest p-4 rounded-2xl flex flex-col justify-between h-40 overflow-hidden relative active:scale-95 transition-transform text-left">
+      <p class="text-base font-bold text-on-surface relative z-10">Mời bạn<br>nhận 100 SC</p>
+      <span class="material-symbols-rounded text-on-surface/10 text-6xl absolute -bottom-4 -right-4">group_add</span>
+      <p class="text-[10px] text-on-secondary-container font-bold z-10">CHIA SẺ →</p>
+    </button>
+  </section>
+</main>
+
+<!-- QR Modal -->
+<div id="qr-modal" class="fixed inset-0 z-[100] hidden">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeQrModal()"></div>
+  <div class="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl p-6 flex flex-col items-center gap-4">
+    <div class="w-10 h-1.5 bg-gray-200 rounded-full mb-2"></div>
+    <h3 id="qr-name" class="text-lg font-bold text-on-surface text-center"></h3>
+    <p id="qr-expiry" class="text-xs text-secondary"></p>
+    <canvas id="qr-canvas" class="rounded-2xl shadow-lg"></canvas>
+    <p class="text-xs text-secondary text-center">Đưa mã này cho nhân viên cửa hàng để sử dụng</p>
+    <button id="qr-use-btn" class="w-full py-3.5 bg-primary text-white font-bold rounded-full active:scale-95 transition-transform">
+      Xác nhận đã dùng
+    </button>
+    <button onclick="closeQrModal()" class="w-full py-3 text-secondary font-semibold text-sm">Huỷ</button>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe pt-2 bg-surface shadow-lg rounded-t-xl">
+  <a href="trang chủ.html" class="flex flex-col items-center justify-center text-secondary p-2 rounded-xl transition-all active:scale-90">
+    <span class="material-symbols-rounded">home</span>
+    <span class="text-[10px] font-semibold mt-1">Home</span>
+  </a>
+  <a href="tích điểm.html" class="flex flex-col items-center justify-center bg-primary/10 text-primary rounded-full px-4 py-1 transition-all active:scale-90">
+    <span class="material-symbols-rounded fill-1">stars</span>
+    <span class="text-[10px] font-bold mt-1">Rewards</span>
+  </a>
+  <a href="bản đồ chỉ đường.html" class="flex flex-col items-center justify-center text-secondary p-2 rounded-xl transition-all active:scale-90">
+    <span class="material-symbols-rounded">map</span>
+    <span class="text-[10px] font-semibold mt-1">Map</span>
+  </a>
+  <a href="profile.html" class="flex flex-col items-center justify-center text-secondary p-2 rounded-xl transition-all active:scale-90">
+    <span class="material-symbols-rounded">person</span>
+    <span class="text-[10px] font-semibold mt-1">Profile</span>
+  </a>
+</nav>
+
+<!-- Snowflake effect (capped) -->
+<script src="shared/app.js"></script>
+<script>
+  let currentUid = null;
+  let historyLoaded = false;
+  let activeVoucherId = null;
+
+  // Capped snowflake effect (max 8)
+  let snowCount = 0;
+  setInterval(() => {
+    if (snowCount >= 8) return;
+    snowCount++;
+    const el = document.createElement('div');
+    el.className = 'snowflake';
+    el.textContent = '❄';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (Math.random() * 10 + 10) + 'px';
+    el.style.color = 'rgba(187,0,19,0.1)';
+    el.style.animationDuration = (Math.random() * 3 + 4) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => { el.remove(); snowCount--; }, 7000);
+  }, 2000);
+
+  function voucherCard(v) {
+    const expiry = formatDate(v.expiresAt);
+    const isExpiringSoon = v.expiresAt?.toDate && (v.expiresAt.toDate() - Date.now()) < 3 * 86400000;
+    return `
+      <div class="relative group active:scale-[0.98] transition-all duration-200">
+        <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-outline-variant/30 coupon-cutout flex">
+          <div class="w-3 bg-primary shrink-0"></div>
+          <div class="flex-1 p-4 flex gap-4 items-center">
+            <div class="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center text-4xl shrink-0">
+              ${v.rewardId?.includes('kem') ? '🍦' : v.rewardId?.includes('tra-sua') ? '🧋' : '🎁'}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-primary text-sm leading-tight">${v.name}</h3>
+              <p class="text-xs ${isExpiringSoon ? 'text-red-500 font-semibold' : 'text-on-secondary-container'} mt-1">
+                HSD: ${expiry}${isExpiringSoon ? ' ⚠️' : ''}
+              </p>
+              <button onclick="openQrModal('${v.id}','${v.name.replace(/'/g,"\\'")}','${expiry}')"
+                class="mt-3 bg-primary text-white px-5 py-2 rounded-full text-xs font-bold shadow active:scale-90 transition-transform">
+                Dùng ngay
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="absolute -inset-1 bg-primary/5 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
+      </div>`;
+  }
+
+  function usedVoucherCard(v) {
+    return `
+      <div class="bg-surface-container rounded-xl p-4 flex items-center gap-3 opacity-60">
+        <span class="text-2xl">${v.rewardId?.includes('kem') ? '🍦' : v.rewardId?.includes('tra-sua') ? '🧋' : '🎁'}</span>
+        <div class="flex-1">
+          <p class="text-sm font-semibold line-through text-secondary">${v.name}</p>
+          <p class="text-xs text-secondary">Đã sử dụng</p>
+        </div>
+        <span class="material-symbols-rounded text-secondary fill-1">check_circle</span>
+      </div>`;
+  }
+
+  async function loadVouchers() {
+    const snap = await db.collection('vouchers')
+      .where('userId', '==', currentUid)
+      .get();
+
+    // Filter and sort client-side — no composite index needed
+    const docs = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(v => !v.used)
+      .sort((a, b) => {
+        const ta = a.expiresAt?.toMillis?.() || 0;
+        const tb = b.expiresAt?.toMillis?.() || 0;
+        return ta - tb;
+      });
+
+    const count = docs.length;
+    document.getElementById('voucher-count').textContent = count;
+    const list = document.getElementById('voucher-list');
+
+    if (count === 0) {
+      list.innerHTML = `
+        <div class="flex flex-col items-center py-10 gap-3 text-gray-400">
+          <span class="material-symbols-rounded text-5xl">card_giftcard</span>
+          <p class="text-sm text-center">Chưa có voucher nào.<br>Hãy đổi điểm để nhận quà!</p>
+          <a href="tích điểm.html" class="mt-2 px-6 py-2.5 bg-primary text-white rounded-full text-sm font-bold">Đổi điểm ngay</a>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = docs.map(v => voucherCard(v)).join('');
+  }
+
+  async function toggleHistory() {
+    const container = document.getElementById('history-list');
+    const chevron   = document.getElementById('history-chevron');
+    const isOpen    = !container.classList.contains('hidden');
+
+    if (isOpen) {
+      container.classList.add('hidden');
+      chevron.style.transform = '';
+      return;
+    }
+    container.classList.remove('hidden');
+    chevron.style.transform = 'rotate(90deg)';
+
+    if (!historyLoaded) {
+      historyLoaded = true;
+      const snap = await db.collection('vouchers')
+        .where('userId', '==', currentUid)
+        .get();
+
+      const used = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(v => v.used)
+        .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+        .slice(0, 20);
+
+      if (!used.length) {
+        container.innerHTML = `<p class="text-center text-secondary text-sm py-4">Chưa có voucher đã dùng.</p>`;
+      } else {
+        container.innerHTML = used.map(v => usedVoucherCard(v)).join('');
+      }
+    }
+  }
+
+  function openQrModal(id, name, expiry) {
+    activeVoucherId = id;
+    document.getElementById('qr-name').textContent   = name;
+    document.getElementById('qr-expiry').textContent = `HSD: ${expiry}`;
+    document.getElementById('qr-modal').classList.remove('hidden');
+
+    // Generate QR code
+    const canvas = document.getElementById('qr-canvas');
+    QRCode.toCanvas(canvas, `MIXUE-VOUCHER-${id}`, {
+      width: 220, margin: 2,
+      color: { dark: '#bb0013', light: '#ffffff' }
+    });
+
+    document.getElementById('qr-use-btn').onclick = () => confirmUsed(id);
+  }
+
+  function closeQrModal() {
+    document.getElementById('qr-modal').classList.add('hidden');
+    activeVoucherId = null;
+  }
+
+  async function confirmUsed(id) {
+    const btn = document.getElementById('qr-use-btn');
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      await db.collection('vouchers').doc(id).update({ used: true });
+      closeQrModal();
+      showToast('Voucher đã được sử dụng! 🎉', 'success');
+      historyLoaded = false;
+      await loadVouchers();
+    } catch {
+      showToast('Có lỗi xảy ra. Thử lại.', 'error');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Xác nhận đã dùng';
+  }
+
+  async function shareReferral() {
+    const data = await getUserData(currentUid);
+    const code = data?.referralCode || '—';
+    const text = `Dùng mã ${code} khi đăng ký Mixue GO để cả hai cùng nhận +100 Snow Coins! 🍦`;
+    if (navigator.share) {
+      navigator.share({ title: 'Mixue GO – Mã giới thiệu', text });
+    } else {
+      navigator.clipboard.writeText(text).then(() => showToast('Đã sao chép mã giới thiệu!', 'success'));
+    }
+  }
+
+  (async () => {
+    const user = await authGuard();
+    currentUid = user.uid;
+    await initNotificationDrawer(user.uid);
+    const data = await getUserData(user.uid);
+    document.getElementById('streak-count').textContent = data?.streak ?? 0;
+    await loadVouchers();
+  })();
+</script>
+</body>
+</html>

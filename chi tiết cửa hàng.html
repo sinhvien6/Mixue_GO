@@ -1,0 +1,296 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+<title>Mixue GO - Chi tiết cửa hàng</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link rel="stylesheet" href="shared/styles.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: '#bb0013', 'primary-container': '#e71520', 'on-primary-container': '#fffbff',
+          'primary-fixed': '#ffdad6', 'on-primary': '#ffffff',
+          surface: '#f4fafd', 'surface-container': '#e8eff1', 'surface-container-low': '#eef5f7',
+          'surface-container-high': '#e2e9ec', 'surface-container-highest': '#dde4e6',
+          'surface-container-lowest': '#ffffff', 'on-surface': '#161d1f', 'on-surface-variant': '#5e3f3c',
+          secondary: '#5d5f5f', 'on-secondary-container': '#616363',
+          tertiary: '#4c5f66', background: '#f4fafd',
+        },
+        fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+      }
+    }
+  };
+</script>
+<style>
+  body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+  .material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  .glass-morphism { background: rgba(255,255,255,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  @keyframes bounce-slow { 0%,100%{transform:translateY(-5%)} 50%{transform:translateY(0)} }
+  .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
+</style>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-24 overflow-x-hidden">
+
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-50 bg-surface shadow-sm flex justify-between items-center px-5 py-2">
+  <div class="flex items-center gap-4">
+    <button onclick="history.back()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high active:scale-95 transition-all">
+      <span class="material-symbols-rounded text-primary">arrow_back</span>
+    </button>
+    <h1 id="store-title" class="text-lg font-bold text-primary">Mixue Xuân Thủy</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <button class="notif-bell relative p-2 rounded-full hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-rounded text-on-surface-variant">notifications</span>
+      <span class="notif-badge hidden">0</span>
+    </button>
+    <div class="flex items-center gap-1 bg-primary/10 px-3 py-1 rounded-full">
+      <span id="streak-count" class="font-bold text-primary text-sm">—</span>
+      <span>🔥</span>
+    </div>
+  </div>
+</header>
+
+<main class="w-full max-w-md mx-auto">
+  <!-- Hero -->
+  <section class="relative h-[260px] w-full overflow-hidden">
+    <div id="hero-bg" class="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
+         style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuAsTYfhqVFMwXEHscfCDcBPvQTG-uJOGfjhzOe4i2OP3vt-ivhpib77D5IoQLEQDHu_MwYdDbPmaReb6QKSa0aClCO3EdCrVbBp78lxlXepjwpkn0txkpR_tWVrBm4l1y84NrNf9bKCb4R4aPHOPawTxE3tnoMjFe0saks9TBDHNlP5CFt9OWkkl1gVChAP1ktldlIjGABDQV_OYp6yZdnqTaNhfahG5AUfm2ZblCX8ABjpx2oZn8EkuROhcO-mCzUDmWtTW8bYruk')">
+    </div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+    <div class="absolute bottom-4 left-5 right-5 flex justify-between items-end">
+      <div class="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 shadow-lg">
+        <span id="status-dot-hero" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        <span id="status-badge-text" class="text-xs font-bold text-gray-800">0.4km • Đang mở cửa</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Status Card -->
+  <section class="px-5 -mt-6 relative z-10">
+    <div id="status-card" class="bg-white rounded-xl shadow-lg p-4 border border-surface-container-high">
+      <div class="flex items-start gap-4">
+        <div id="status-icon-wrap" class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+          <span id="status-emoji" class="text-2xl">😊</span>
+        </div>
+        <div class="flex-1">
+          <h2 id="status-label" class="text-base font-bold text-green-600">Đang vắng khách</h2>
+          <p id="status-desc" class="text-sm text-on-secondary-container mt-1">Ghé ngay để nhận x2 Snow Coins khi thanh toán tại quầy!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Traffic Chart -->
+  <section class="px-5 mt-6">
+    <div class="bg-surface-container-low rounded-xl p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-base font-bold text-on-surface">Lượng khách theo giờ</h3>
+        <span class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded uppercase tracking-wider">LIVE</span>
+      </div>
+      <div id="chart-bars" class="flex items-end justify-between h-32 gap-1 px-1">
+        <!-- rendered by JS -->
+      </div>
+      <div id="chart-labels" class="flex justify-between mt-2 px-1">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Store Info -->
+  <section class="px-5 mt-6 space-y-4">
+    <a id="addr-link" href="bản đồ chỉ đường.html" class="flex items-start gap-4">
+      <span class="material-symbols-rounded text-tertiary mt-1">location_on</span>
+      <div>
+        <h4 class="text-sm font-semibold text-on-surface">Địa chỉ</h4>
+        <p id="store-addr" class="text-sm text-on-secondary-container">144 Xuân Thủy, Cầu Giấy, Hà Nội</p>
+      </div>
+    </a>
+    <div class="flex items-start gap-4">
+      <span class="material-symbols-rounded text-tertiary mt-1">schedule</span>
+      <div>
+        <h4 class="text-sm font-semibold text-on-surface">Giờ mở cửa</h4>
+        <p id="store-hours" class="text-sm text-on-secondary-container">Hàng ngày: 08:00 – 22:00</p>
+      </div>
+    </div>
+    <a id="phone-link" href="tel:02433338888" class="flex items-start gap-4">
+      <span class="material-symbols-rounded text-tertiary mt-1">phone</span>
+      <div>
+        <h4 class="text-sm font-semibold text-on-surface">Số điện thoại</h4>
+        <p id="store-phone" class="text-sm text-primary font-semibold">024 3333 8888</p>
+      </div>
+    </a>
+  </section>
+
+  <!-- Actions -->
+  <section class="px-5 mt-8 flex flex-col gap-4">
+    <a id="directions-btn" href="bản đồ chỉ đường.html" class="w-full h-14 bg-primary-container text-on-primary-container font-bold rounded-full shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all text-sm">
+      <span class="material-symbols-rounded">directions</span>
+      Chỉ đường
+    </a>
+    <button id="notify-btn" data-active="false" data-store-id="xuan-thuy"
+      class="w-full h-14 border-2 border-primary text-primary font-bold rounded-full flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-primary/5 text-sm">
+      <span id="notify-icon" class="material-symbols-rounded">notifications_active</span>
+      <span id="notify-text">Nhận thông báo khi vắng</span>
+    </button>
+  </section>
+
+  <!-- Mascot -->
+  <section class="flex justify-center mt-8 mb-12 opacity-30 grayscale pointer-events-none">
+    <div class="w-32 h-32 animate-bounce-slow">
+      <img alt="Snow King" class="w-full h-full object-contain"
+           src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjicFcdTOaRzAQVDVx_Uqc1SpyAU1K-JSWgvGbmSQOUNu869qAmAr9JA3Rrrlymop2FLfm8G7BqlG3TUvY2yKlksz6G4F-wnAevjPa1ZzINJdz4qOxHbuOJxSVW11vhEnhFcoGXurA9KmmVus4_TpyQ2sGNSEX2JJNprne0_qmH9Age00whr3VvgKgTBWS7HJCRuF0-7qXZQr-_T1p-rCMv4SPLSgKDmSgvN43Na8Ry1F0uTuAq4qOS1AdncwjByzU1oCXDaubPKE"
+           onerror="this.parentElement.innerHTML='<span style=font-size:80px>🍦</span>'">
+    </div>
+  </section>
+</main>
+
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe pt-2 bg-surface shadow-[0_-2px_10px_rgba(0,0,0,0.05)] rounded-t-xl">
+  <a href="trang chủ.html" class="flex flex-col items-center text-secondary p-2 rounded-xl transition-all active:scale-90">
+    <span class="material-symbols-rounded">home</span>
+    <span class="text-[10px] font-semibold mt-1">Home</span>
+  </a>
+  <a href="tích điểm.html" class="flex flex-col items-center text-secondary p-2 rounded-xl transition-all active:scale-90">
+    <span class="material-symbols-rounded">stars</span>
+    <span class="text-[10px] font-semibold mt-1">Rewards</span>
+  </a>
+  <a href="bản đồ chỉ đường.html" class="flex flex-col items-center bg-primary/10 text-primary rounded-full px-4 py-1 transition-all active:scale-90">
+    <span class="material-symbols-rounded fill-1">map</span>
+    <span class="text-[10px] font-bold mt-1">Map</span>
+  </a>
+  <a href="profile.html" class="flex flex-col items-center text-secondary p-2 rounded-xl transition-all active:scale-90">
+    <span class="material-symbols-rounded">person</span>
+    <span class="text-[10px] font-semibold mt-1">Profile</span>
+  </a>
+</nav>
+
+<script src="shared/app.js"></script>
+<script>
+  const STORE_DATA = {
+    'xuan-thuy':    { name:'Mixue Xuân Thủy',    addr:'144 Xuân Thủy, Cầu Giấy, Hà Nội', hours:'08:00 – 22:00', phone:'02433338888', dist:'0.4km' },
+    'kim-ma':       { name:'Mixue Kim Mã',        addr:'77 Kim Mã, Ba Đình, Hà Nội',       hours:'08:00 – 23:00', phone:'02433338889', dist:'1.2km' },
+    'hang-bong':    { name:'Mixue Hàng Bông',     addr:'28 Hàng Bông, Hoàn Kiếm, Hà Nội', hours:'08:00 – 22:30', phone:'02433338890', dist:'1.8km' },
+    'tay-son':      { name:'Mixue Tây Sơn',       addr:'165 Tây Sơn, Đống Đa, Hà Nội',    hours:'07:30 – 22:30', phone:'02433338891', dist:'2.1km' },
+    'le-van-luong': { name:'Mixue Lê Văn Lương',  addr:'59 Lê Văn Lương, Thanh Xuân',     hours:'08:00 – 22:00', phone:'02433338892', dist:'3.5km' },
+    'minh-khai':    { name:'Mixue Minh Khai',     addr:'312 Minh Khai, Hai Bà Trưng',      hours:'08:00 – 22:00', phone:'02433338893', dist:'4.1km' },
+    'nguyen-trai':  { name:'Mixue Nguyễn Trãi',  addr:'363 Nguyễn Trãi, Thanh Xuân',      hours:'08:00 – 22:00', phone:'02433338894', dist:'5.0km' },
+  };
+
+  const CHART_HOURS = [8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];
+
+  function buildChart(currentHour) {
+    const bars = document.getElementById('chart-bars');
+    const labels = document.getElementById('chart-labels');
+    const barHtml = CHART_HOURS.map(h => {
+      const t = getTrafficLevel(h);
+      const isCurrent = h === currentHour;
+      const color = isCurrent ? 'bg-primary' : (t.level === 'busy' ? 'bg-red-300' : t.level === 'moderate' ? 'bg-amber-300' : 'bg-green-300');
+      return `<div class="flex-1 ${color} rounded-t-sm relative group" style="height:${t.percent}%">
+        ${isCurrent ? `<div class="absolute -top-7 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[9px] px-1 py-0.5 rounded whitespace-nowrap">Hiện tại</div>` : ''}
+      </div>`;
+    }).join('');
+
+    bars.innerHTML = barHtml;
+
+    // Label only first, current, and last
+    const labelHtml = CHART_HOURS.map((h, i) => {
+      const isCurrent = h === currentHour;
+      if (i === 0 || i === CHART_HOURS.length - 1 || isCurrent) {
+        return `<span class="text-[10px] ${isCurrent ? 'text-primary font-bold' : 'text-on-secondary-container'}">${h}:00</span>`;
+      }
+      return `<span></span>`;
+    }).join('');
+    labels.innerHTML = labelHtml;
+  }
+
+  function updateStatusUI(traffic, storeName, dist) {
+    const statusColors = {
+      empty:    { dot:'bg-green-500',  cardBg:'border-green-200 bg-green-50', labelColor:'text-green-600', iconBg:'bg-green-100', desc:'Ghé ngay để nhận x2 Snow Coins khi thanh toán tại quầy!' },
+      moderate: { dot:'bg-amber-400',  cardBg:'border-amber-200 bg-amber-50', labelColor:'text-amber-600', iconBg:'bg-amber-100', desc:'Thời gian chờ khoảng 5–10 phút.' },
+      busy:     { dot:'bg-red-500',    cardBg:'border-red-200 bg-red-50',     labelColor:'text-red-600',   iconBg:'bg-red-100',   desc:'Đông khách — thời gian chờ khoảng 15–20 phút.' },
+    }[traffic.level];
+
+    document.getElementById('status-dot-hero').className = `w-2 h-2 rounded-full ${statusColors.dot} animate-pulse`;
+    document.getElementById('status-badge-text').textContent = `${dist} • Đang mở cửa`;
+    document.getElementById('status-card').className = `bg-white rounded-xl shadow-lg p-4 border ${statusColors.cardBg}`;
+    document.getElementById('status-icon-wrap').className = `w-12 h-12 rounded-full ${statusColors.iconBg} flex items-center justify-center shrink-0`;
+    document.getElementById('status-emoji').textContent = traffic.emoji;
+    document.getElementById('status-label').className = `text-base font-bold ${statusColors.labelColor}`;
+    document.getElementById('status-label').textContent = traffic.label;
+    document.getElementById('status-desc').textContent = statusColors.desc;
+  }
+
+  let currentUid = null;
+
+  async function toggleNotify(storeId) {
+    const btn      = document.getElementById('notify-btn');
+    const icon     = document.getElementById('notify-icon');
+    const textEl   = document.getElementById('notify-text');
+    const isActive = btn.dataset.active === 'true';
+
+    const newState = !isActive;
+    btn.dataset.active = String(newState);
+
+    const prefKey = `notificationPrefs.${storeId}`;
+    await db.collection('users').doc(currentUid).update({ [prefKey]: newState });
+
+    if (newState) {
+      btn.classList.add('bg-primary/10', 'border-primary/50');
+      icon.classList.add('fill-1');
+      textEl.textContent = 'Đã bật thông báo ✓';
+    } else {
+      btn.classList.remove('bg-primary/10', 'border-primary/50');
+      icon.classList.remove('fill-1');
+      textEl.textContent = 'Nhận thông báo khi vắng';
+    }
+  }
+
+  (async () => {
+    const user = await authGuard();
+    currentUid = user.uid;
+
+    const storeId = new URLSearchParams(location.search).get('store') || 'xuan-thuy';
+    const store   = STORE_DATA[storeId] || STORE_DATA['xuan-thuy'];
+    const hour    = new Date().getHours();
+    const traffic = getTrafficLevel(hour);
+
+    // Populate store info
+    document.getElementById('store-title').textContent = store.name;
+    document.getElementById('store-addr').textContent  = store.addr;
+    document.getElementById('store-hours').textContent = `Hàng ngày: ${store.hours}`;
+    document.getElementById('store-phone').textContent = store.phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1 $2 $3');
+    document.getElementById('phone-link').href         = `tel:${store.phone}`;
+    document.getElementById('notify-btn').dataset.storeId = storeId;
+
+    updateStatusUI(traffic, store.name, store.dist);
+    buildChart(hour);
+
+    // Load user data
+    const data = await getUserData(user.uid);
+    document.getElementById('streak-count').textContent = data?.streak ?? 0;
+
+    // Restore notification pref
+    const pref = data?.notificationPrefs?.[storeId] ?? false;
+    if (pref) {
+      const btn = document.getElementById('notify-btn');
+      btn.dataset.active = 'true';
+      btn.classList.add('bg-primary/10','border-primary/50');
+      document.getElementById('notify-icon').classList.add('fill-1');
+      document.getElementById('notify-text').textContent = 'Đã bật thông báo ✓';
+    }
+
+    document.getElementById('notify-btn').onclick = () => toggleNotify(storeId);
+    await initNotificationDrawer(user.uid);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,347 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Đăng nhập – Mixue GO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+  <link rel="stylesheet" href="shared/styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { primary: '#bb0013' },
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }
+        }
+      }
+    };
+  </script>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4fafd; }</style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center px-5 py-10">
+
+  <!-- Logo -->
+  <div class="flex flex-col items-center mb-8">
+    <div class="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center shadow-lg mb-4">
+      <img src="mixue logo.png" alt="Mixue" class="w-14 h-14 object-contain"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <span class="material-symbols-rounded text-white text-4xl" style="display:none">local_cafe</span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900">Mixue GO</h1>
+    <p class="text-sm text-gray-500 mt-1">Tìm cửa hàng, tích điểm, nhận quà</p>
+  </div>
+
+  <!-- Card -->
+  <div class="w-full max-w-sm bg-white rounded-3xl shadow-xl overflow-hidden">
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-100">
+      <button id="tab-login" onclick="switchTab('login')"
+        class="flex-1 py-4 text-sm font-bold text-primary border-b-2 border-primary transition-colors">
+        Đăng nhập
+      </button>
+      <button id="tab-register" onclick="switchTab('register')"
+        class="flex-1 py-4 text-sm font-bold text-gray-400 border-b-2 border-transparent transition-colors">
+        Đăng ký
+      </button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="form-login" class="p-6 flex flex-col gap-4" onsubmit="handleLogin(event)">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Email</label>
+        <input type="email" id="login-email" class="input-field" placeholder="email@example.com" required>
+      </div>
+      <div class="relative">
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Mật khẩu</label>
+        <input type="password" id="login-password" class="input-field pr-12" placeholder="••••••••" required>
+        <button type="button" onclick="togglePw('login-password',this)"
+          class="absolute right-3 bottom-3 text-gray-400 material-symbols-rounded text-[20px]">visibility</button>
+      </div>
+      <button type="submit" id="btn-login"
+        class="w-full py-3.5 bg-primary text-white font-bold rounded-full mt-1 flex items-center justify-center gap-2 active:scale-95 transition-transform">
+        <span id="btn-login-text">Đăng nhập</span>
+        <span id="btn-login-spin" class="hidden material-symbols-rounded text-[20px]" style="animation:spin 1s linear infinite">sync</span>
+      </button>
+    </form>
+
+    <!-- Register Form -->
+    <form id="form-register" class="p-6 flex-col gap-4 hidden" onsubmit="handleRegister(event)">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Tên hiển thị</label>
+        <input type="text" id="reg-name" class="input-field" placeholder="Ví dụ: Minh Anh" required>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Số điện thoại</label>
+        <input type="tel" id="reg-phone" class="input-field" placeholder="09xxxxxxxx">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Email</label>
+        <input type="email" id="reg-email" class="input-field" placeholder="email@example.com" required>
+      </div>
+      <div class="relative">
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Mật khẩu</label>
+        <input type="password" id="reg-password" class="input-field pr-12" placeholder="Tối thiểu 6 ký tự" required minlength="6">
+        <button type="button" onclick="togglePw('reg-password',this)"
+          class="absolute right-3 bottom-3 text-gray-400 material-symbols-rounded text-[20px]">visibility</button>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+          Mã giới thiệu <span class="normal-case text-gray-400 font-normal">(không bắt buộc)</span>
+        </label>
+        <input type="text" id="reg-referral" class="input-field uppercase" placeholder="Ví dụ: MX4B9K" maxlength="6">
+      </div>
+      <button type="submit" id="btn-register"
+        class="w-full py-3.5 bg-primary text-white font-bold rounded-full mt-1 flex items-center justify-center gap-2 active:scale-95 transition-transform">
+        <span id="btn-register-text">Tạo tài khoản</span>
+        <span id="btn-register-spin" class="hidden material-symbols-rounded text-[20px]" style="animation:spin 1s linear infinite">sync</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Demo login -->
+  <div class="w-full max-w-sm mt-4">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flex-1 h-px bg-gray-200"></div>
+      <span class="text-xs text-gray-400 font-medium">hoặc</span>
+      <div class="flex-1 h-px bg-gray-200"></div>
+    </div>
+    <button onclick="loginDemo()" id="btn-demo"
+      class="w-full py-3.5 bg-gray-800 text-white font-bold rounded-full flex items-center justify-center gap-2 active:scale-95 transition-transform">
+      <span class="material-symbols-rounded text-[18px]">play_circle</span>
+      <span id="btn-demo-text">Dùng tài khoản Demo</span>
+    </button>
+    <p class="text-center text-[10px] text-gray-400 mt-2">demo@mixuego.vn · Demo@2024</p>
+  </div>
+
+  <p id="error-msg" class="mt-4 text-sm text-red-600 font-medium text-center hidden"></p>
+
+  <p class="mt-8 text-xs text-gray-400 text-center">
+    Bằng cách tiếp tục, bạn đồng ý với<br>
+    <a href="#" class="text-primary underline">Điều khoản dịch vụ</a> và
+    <a href="#" class="text-primary underline">Chính sách bảo mật</a>
+  </p>
+
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  <script src="shared/app.js"></script>
+  <script>
+    auth.onAuthStateChanged(user => { if (user) redirectAfterLogin(); });
+
+    function redirectAfterLogin() {
+      const dest = new URLSearchParams(location.search).get('redirect');
+      location.href = dest ? decodeURIComponent(dest) : 'trang chủ.html';
+    }
+
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('tab-login').className =
+        `flex-1 py-4 text-sm font-bold transition-colors border-b-2 ${isLogin ? 'text-primary border-primary' : 'text-gray-400 border-transparent'}`;
+      document.getElementById('tab-register').className =
+        `flex-1 py-4 text-sm font-bold transition-colors border-b-2 ${!isLogin ? 'text-primary border-primary' : 'text-gray-400 border-transparent'}`;
+      document.getElementById('form-login').classList.toggle('hidden', !isLogin);
+      document.getElementById('form-login').classList.toggle('flex', isLogin);
+      document.getElementById('form-register').classList.toggle('hidden', isLogin);
+      document.getElementById('form-register').classList.toggle('flex', !isLogin);
+      clearError();
+    }
+
+    function togglePw(id, btn) {
+      const inp = document.getElementById(id);
+      const hide = inp.type === 'password';
+      inp.type = hide ? 'text' : 'password';
+      btn.textContent = hide ? 'visibility_off' : 'visibility';
+    }
+
+    function setLoading(prefix, on) {
+      document.getElementById(`btn-${prefix}`).disabled = on;
+      document.getElementById(`btn-${prefix}-text`).textContent =
+        on ? '...' : (prefix === 'login' ? 'Đăng nhập' : 'Tạo tài khoản');
+      document.getElementById(`btn-${prefix}-spin`).classList.toggle('hidden', !on);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg; el.classList.remove('hidden');
+    }
+    function clearError() { document.getElementById('error-msg').classList.add('hidden'); }
+
+    async function handleLogin(e) {
+      e.preventDefault(); clearError(); setLoading('login', true);
+      try {
+        await auth.signInWithEmailAndPassword(
+          document.getElementById('login-email').value.trim(),
+          document.getElementById('login-password').value
+        );
+        redirectAfterLogin();
+      } catch (err) {
+        setLoading('login', false);
+        showError(friendlyError(err.code));
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault(); clearError(); setLoading('register', true);
+      const name     = document.getElementById('reg-name').value.trim();
+      const phone    = document.getElementById('reg-phone').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const refInput = document.getElementById('reg-referral').value.trim().toUpperCase();
+
+      let cred;
+      // Step 1: Create Firebase Auth user (critical — abort if this fails)
+      try {
+        cred = await auth.createUserWithEmailAndPassword(email, password);
+        await cred.user.updateProfile({ displayName: name });
+      } catch (authErr) {
+        setLoading('register', false);
+        showError(friendlyError(authErr.code));
+        return;
+      }
+
+      // Step 2: Write Firestore data (non-critical — user is already logged in)
+      try {
+        const uid = cred.user.uid;
+        const referralCode = generateReferralCode(uid);
+        let referredBy = null;
+        let startCoins = 0;
+
+        if (refInput) {
+          const snap = await db.collection('users').where('referralCode', '==', refInput).get();
+          if (!snap.empty) {
+            referredBy = snap.docs[0].id;
+            startCoins = 100;
+            await awardCoins(referredBy, 100, 'Thưởng giới thiệu bạn bè 🎉');
+          }
+        }
+
+        await db.collection('users').doc(uid).set({
+          displayName: name, phone: phone || null, email,
+          snowCoins: startCoins, streak: 0, lastVisitDate: null,
+          visitDates: [], level: 1, badges: [],
+          referralCode, referredBy, notificationPrefs: {},
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+
+        if (startCoins > 0) {
+          await db.collection('transactions').add({
+            userId: uid, type: 'earn', amount: 100,
+            description: 'Thưởng đăng ký qua mã giới thiệu 🎁',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+      } catch (dbErr) {
+        // Firestore failed (likely security rules) — Auth user exists, still redirect
+        console.warn('Firestore write failed:', dbErr.code, dbErr.message);
+      }
+
+      showToast('Chào mừng đến với Mixue GO! 🎉', 'success');
+      setTimeout(redirectAfterLogin, 1200);
+    }
+
+    async function loginDemo() {
+      const DEMO_EMAIL = 'demo@mixuego.vn';
+      const DEMO_PASS  = 'Demo@2024';
+      const btn = document.getElementById('btn-demo');
+      const txt = document.getElementById('btn-demo-text');
+      btn.disabled = true; txt.textContent = 'Đang kết nối...';
+      clearError();
+
+      try {
+        await auth.signInWithEmailAndPassword(DEMO_EMAIL, DEMO_PASS);
+        redirectAfterLogin();
+      } catch (signInErr) {
+        if (!['auth/user-not-found','auth/invalid-credential','auth/wrong-password'].includes(signInErr.code)) {
+          btn.disabled = false; txt.textContent = 'Dùng tài khoản Demo';
+          showError(friendlyError(signInErr.code)); return;
+        }
+        // First time — provision demo account
+        txt.textContent = 'Đang tạo tài khoản demo...';
+        let demoCred;
+        try {
+          demoCred = await auth.createUserWithEmailAndPassword(DEMO_EMAIL, DEMO_PASS);
+          await demoCred.user.updateProfile({ displayName: 'Snow Demo' });
+        } catch (createErr) {
+          btn.disabled = false; txt.textContent = 'Dùng tài khoản Demo';
+          showError(friendlyError(createErr.code)); return;
+        }
+
+        // Seed Firestore data (non-fatal)
+        try {
+          const uid = demoCred.user.uid;
+          const referralCode = generateReferralCode(uid);
+          const today = new Date();
+          const visitDates = [];
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date(today); d.setDate(d.getDate() - i);
+            visitDates.push(d.toISOString().split('T')[0]);
+          }
+          const batch = db.batch();
+          batch.set(db.collection('users').doc(uid), {
+            displayName: 'Snow Demo', email: DEMO_EMAIL, phone: null,
+            snowCoins: 850, streak: 7, lastVisitDate: visitDates[6],
+            visitDates, level: 8, referralCode, referredBy: null,
+            notificationPrefs: { 'xuan-thuy': true },
+            badges: ['first_visit', 'streak_7', 'first_redeem'],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          const txs = [
+            { type:'earn',   amount:200, description:'Check-in tại Mixue Xuân Thủy ✓' },
+            { type:'earn',   amount:150, description:'Check-in tại Mixue Kim Mã ✓' },
+            { type:'redeem', amount:300, description:'Đổi: Kem Ốc Quế Matcha 🍦' },
+            { type:'earn',   amount:100, description:'Thưởng chuỗi 7 ngày 🔥' },
+            { type:'earn',   amount:700, description:'Check-in tại Mixue Hàng Bông ✓' },
+          ];
+          txs.forEach((t, i) => {
+            const ref = db.collection('transactions').doc();
+            const ts  = new Date(); ts.setDate(ts.getDate() - (txs.length - 1 - i));
+            batch.set(ref, { userId: uid, ...t, createdAt: firebase.firestore.Timestamp.fromDate(ts) });
+          });
+          const vRef = db.collection('vouchers').doc();
+          const exp  = new Date(); exp.setDate(exp.getDate() + 14);
+          batch.set(vRef, {
+            userId: uid, rewardId: 'kem-oc-que', name: 'Kem Ốc Quế Matcha',
+            scCost: 300, used: false,
+            expiresAt: firebase.firestore.Timestamp.fromDate(exp),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          const pRef = db.collection('community_posts').doc();
+          batch.set(pRef, {
+            userId: uid, userName: 'Snow Demo',
+            content: 'Ghé Mixue Xuân Thủy lúc 10h sáng, vắng lắm, phục vụ siêu nhanh! ❄️',
+            type: 'post', likes: 3, likedBy: [], tags: ['MixueHanoi', 'MorningVibes'],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          await batch.commit();
+        } catch (dbErr) {
+          console.warn('Demo Firestore seed failed (rules?):', dbErr.code);
+        }
+
+        showToast('Chào mừng đến với Demo! 🎉', 'success');
+        setTimeout(redirectAfterLogin, 900);
+      }
+    }
+
+    function friendlyError(code) {
+      const map = {
+        'auth/user-not-found':           'Email không tồn tại.',
+        'auth/wrong-password':           'Mật khẩu không đúng.',
+        'auth/invalid-credential':       'Email hoặc mật khẩu không đúng.',
+        'auth/invalid-login-credentials':'Email hoặc mật khẩu không đúng.',
+        'auth/email-already-in-use':     'Email này đã được sử dụng.',
+        'auth/weak-password':            'Mật khẩu phải có ít nhất 6 ký tự.',
+        'auth/invalid-email':            'Địa chỉ email không hợp lệ.',
+        'auth/too-many-requests':        'Quá nhiều lần thử. Vui lòng thử lại sau.',
+        'auth/network-request-failed':   'Lỗi kết nối. Kiểm tra mạng của bạn.',
+        'auth/operation-not-allowed':    '⚠️ Chưa bật đăng nhập Email/Password trong Firebase Console → Authentication → Sign-in method.',
+        'auth/configuration-not-found':  '⚠️ Firebase chưa được cấu hình đúng. Kiểm tra authDomain trong app.js.',
+        'auth/api-key-not-valid.-please-pass-a-valid-api-key.': '⚠️ API Key Firebase không hợp lệ.',
+      };
+      return map[code] || `Lỗi (${code}). Vui lòng thử lại.`;
+    }
+  </script>
+</body>
+</html>
