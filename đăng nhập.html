@@ -132,7 +132,9 @@
     auth.onAuthStateChanged(user => { if (user) redirectAfterLogin(); });
 
     function redirectAfterLogin() {
-      location.href = 'trang chủ.html';
+      const dest = new URLSearchParams(location.search).get('redirect');
+      // URLSearchParams.get() decodes once — dest is the original href, use directly
+      location.href = dest || 'trang chủ.html';
     }
 
     function switchTab(tab) {

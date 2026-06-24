@@ -22,7 +22,9 @@ function authGuard() {
   return new Promise((resolve) => {
     auth.onAuthStateChanged((user) => {
       if (!user) {
-        location.href = 'đăng nhập.html';
+        // Store the full href (already correctly encoded by the browser)
+        // so redirectAfterLogin() can navigate back without double-encoding.
+        location.href = 'đăng nhập.html?redirect=' + encodeURIComponent(location.href);
       } else {
         resolve(user);
       }
