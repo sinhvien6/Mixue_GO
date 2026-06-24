@@ -132,7 +132,7 @@
 
   <!-- Actions -->
   <section class="px-5 mt-8 flex flex-col gap-4">
-    <a id="directions-btn" href="bản đồ chỉ đường.html" class="w-full h-14 bg-primary-container text-on-primary-container font-bold rounded-full shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all text-sm">
+    <a id="directions-btn" href="#" target="_blank" rel="noopener" class="w-full h-14 bg-primary-container text-on-primary-container font-bold rounded-full shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all text-sm">
       <span class="material-symbols-rounded">directions</span>
       Chỉ đường
     </a>
@@ -280,6 +280,8 @@
     document.getElementById('store-phone').textContent = store.phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1 $2 $3');
     document.getElementById('phone-link').href         = `tel:${store.phone}`;
     document.getElementById('notify-btn').dataset.storeId = storeId;
+    document.getElementById('directions-btn').href =
+      `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}&travelmode=walking`;
 
     updateStatusUI(traffic, store.name, store.dist);
 
