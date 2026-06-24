@@ -250,24 +250,37 @@
       btn.disabled = true; txt.textContent = 'Đang kết nối...';
       clearError();
 
+      // Try sign in first
       try {
         await auth.signInWithEmailAndPassword(DEMO_EMAIL, DEMO_PASS);
         redirectAfterLogin();
+        return;
       } catch (signInErr) {
-        if (!['auth/user-not-found','auth/invalid-credential','auth/wrong-password'].includes(signInErr.code)) {
+        // Fatal errors: Email/Password auth not enabled, or no network
+        const FATAL = ['auth/operation-not-allowed', 'auth/network-request-failed', 'auth/configuration-not-found'];
+        if (FATAL.includes(signInErr.code)) {
           btn.disabled = false; txt.textContent = 'Dùng tài khoản Demo';
           showError(friendlyError(signInErr.code)); return;
         }
-        // First time — provision demo account
-        txt.textContent = 'Đang tạo tài khoản demo...';
-        let demoCred;
-        try {
-          demoCred = await auth.createUserWithEmailAndPassword(DEMO_EMAIL, DEMO_PASS);
-          await demoCred.user.updateProfile({ displayName: 'Snow Demo' });
-        } catch (createErr) {
+        // Any credential error (account not found, wrong password, etc.) → try to create
+      }
+
+      // Provision demo account on first use
+      txt.textContent = 'Đang tạo tài khoản demo...';
+      let demoCred;
+      try {
+        demoCred = await auth.createUserWithEmailAndPassword(DEMO_EMAIL, DEMO_PASS);
+        await demoCred.user.updateProfile({ displayName: 'Snow Demo' });
+      } catch (createErr) {
+        if (createErr.code === 'auth/email-already-in-use') {
+          // Account exists but wrong password stored — sign in will fail so inform user
           btn.disabled = false; txt.textContent = 'Dùng tài khoản Demo';
-          showError(friendlyError(createErr.code)); return;
+          showError('Tài khoản demo đã tồn tại nhưng mật khẩu không khớp. Hãy thử đăng nhập thủ công: demo@mixuego.vn / Demo@2024');
+          return;
         }
+        btn.disabled = false; txt.textContent = 'Dùng tài khoản Demo';
+        showError(friendlyError(createErr.code)); return;
+      }
 
         // Seed Firestore data (non-fatal)
         try {
