@@ -129,8 +129,6 @@
   <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   <script src="shared/app.js"></script>
   <script>
-    auth.onAuthStateChanged(user => { if (user) redirectAfterLogin(); });
-
     function redirectAfterLogin() {
       const dest = new URLSearchParams(location.search).get('redirect');
       // URLSearchParams.get() decodes once — dest is the original href, use directly
@@ -283,60 +281,59 @@
         showError(friendlyError(createErr.code)); return;
       }
 
-        // Seed Firestore data (non-fatal)
-        try {
-          const uid = demoCred.user.uid;
-          const referralCode = generateReferralCode(uid);
-          const today = new Date();
-          const visitDates = [];
-          for (let i = 6; i >= 0; i--) {
-            const d = new Date(today); d.setDate(d.getDate() - i);
-            visitDates.push(d.toISOString().split('T')[0]);
-          }
-          const batch = db.batch();
-          batch.set(db.collection('users').doc(uid), {
-            displayName: 'Snow Demo', email: DEMO_EMAIL, phone: null,
-            snowCoins: 850, streak: 7, lastVisitDate: visitDates[6],
-            visitDates, level: 8, referralCode, referredBy: null,
-            notificationPrefs: { 'xuan-thuy': true },
-            badges: ['first_visit', 'streak_7', 'first_redeem'],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-          const txs = [
-            { type:'earn',   amount:200, description:'Check-in tại Mixue Xuân Thủy ✓' },
-            { type:'earn',   amount:150, description:'Check-in tại Mixue Kim Mã ✓' },
-            { type:'redeem', amount:300, description:'Đổi: Kem Ốc Quế Matcha 🍦' },
-            { type:'earn',   amount:100, description:'Thưởng chuỗi 7 ngày 🔥' },
-            { type:'earn',   amount:700, description:'Check-in tại Mixue Hàng Bông ✓' },
-          ];
-          txs.forEach((t, i) => {
-            const ref = db.collection('transactions').doc();
-            const ts  = new Date(); ts.setDate(ts.getDate() - (txs.length - 1 - i));
-            batch.set(ref, { userId: uid, ...t, createdAt: firebase.firestore.Timestamp.fromDate(ts) });
-          });
-          const vRef = db.collection('vouchers').doc();
-          const exp  = new Date(); exp.setDate(exp.getDate() + 14);
-          batch.set(vRef, {
-            userId: uid, rewardId: 'kem-oc-que', name: 'Kem Ốc Quế Matcha',
-            scCost: 300, used: false,
-            expiresAt: firebase.firestore.Timestamp.fromDate(exp),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-          const pRef = db.collection('community_posts').doc();
-          batch.set(pRef, {
-            userId: uid, userName: 'Snow Demo',
-            content: 'Ghé Mixue Xuân Thủy lúc 10h sáng, vắng lắm, phục vụ siêu nhanh! ❄️',
-            type: 'post', likes: 3, likedBy: [], tags: ['MixueHanoi', 'MorningVibes'],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-          await batch.commit();
-        } catch (dbErr) {
-          console.warn('Demo Firestore seed failed (rules?):', dbErr.code);
+      // Seed Firestore data (non-fatal)
+      try {
+        const uid = demoCred.user.uid;
+        const referralCode = generateReferralCode(uid);
+        const today = new Date();
+        const visitDates = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today); d.setDate(d.getDate() - i);
+          visitDates.push(d.toISOString().split('T')[0]);
         }
-
-        showToast('Chào mừng đến với Demo! 🎉', 'success');
-        setTimeout(redirectAfterLogin, 900);
+        const batch = db.batch();
+        batch.set(db.collection('users').doc(uid), {
+          displayName: 'Snow Demo', email: DEMO_EMAIL, phone: null,
+          snowCoins: 850, streak: 7, lastVisitDate: visitDates[6],
+          visitDates, level: 8, referralCode, referredBy: null,
+          notificationPrefs: { 'xuan-thuy': true },
+          badges: ['first_visit', 'streak_7', 'first_redeem'],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        const txs = [
+          { type:'earn',   amount:200, description:'Check-in tại Mixue Xuân Thủy ✓' },
+          { type:'earn',   amount:150, description:'Check-in tại Mixue Kim Mã ✓' },
+          { type:'redeem', amount:300, description:'Đổi: Kem Ốc Quế Matcha 🍦' },
+          { type:'earn',   amount:100, description:'Thưởng chuỗi 7 ngày 🔥' },
+          { type:'earn',   amount:700, description:'Check-in tại Mixue Hàng Bông ✓' },
+        ];
+        txs.forEach((t, i) => {
+          const ref = db.collection('transactions').doc();
+          const ts  = new Date(); ts.setDate(ts.getDate() - (txs.length - 1 - i));
+          batch.set(ref, { userId: uid, ...t, createdAt: firebase.firestore.Timestamp.fromDate(ts) });
+        });
+        const vRef = db.collection('vouchers').doc();
+        const exp  = new Date(); exp.setDate(exp.getDate() + 14);
+        batch.set(vRef, {
+          userId: uid, rewardId: 'kem-oc-que', name: 'Kem Ốc Quế Matcha',
+          scCost: 300, used: false,
+          expiresAt: firebase.firestore.Timestamp.fromDate(exp),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        const pRef = db.collection('community_posts').doc();
+        batch.set(pRef, {
+          userId: uid, userName: 'Snow Demo',
+          content: 'Ghé Mixue Xuân Thủy lúc 10h sáng, vắng lắm, phục vụ siêu nhanh! ❄️',
+          type: 'post', likes: 3, likedBy: [], tags: ['MixueHanoi', 'MorningVibes'],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        await batch.commit();
+      } catch (dbErr) {
+        console.warn('Demo Firestore seed failed (rules?):', dbErr.code);
       }
+
+      showToast('Chào mừng đến với Demo! 🎉', 'success');
+      setTimeout(redirectAfterLogin, 900);
     }
 
     function friendlyError(code) {
@@ -356,6 +353,9 @@
       };
       return map[code] || `Lỗi (${code}). Vui lòng thử lại.`;
     }
+
+    // Run after all functions are defined
+    auth.onAuthStateChanged(user => { if (user) redirectAfterLogin(); });
   </script>
 </body>
 </html>
