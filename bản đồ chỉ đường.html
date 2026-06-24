@@ -242,14 +242,34 @@
   }
   document.getElementById('search-input').addEventListener('keydown', e => { if (e.key==='Enter') doSearch(); });
 
+  function updateDistancesFromCoords(lat, lng) {
+    STORES.forEach(s => {
+      s.distKm = haversineKm(lat, lng, s.lat, s.lng);
+      s.dist   = fmtDist(s.distKm);
+    });
+    if (activeStoreId) {
+      const active = STORES.find(s => s.id === activeStoreId);
+      if (active) document.getElementById('sheet-dist').textContent = active.dist;
+    }
+  }
+
   document.getElementById('my-location-btn').addEventListener('click', () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        p => map.flyTo([p.coords.latitude, p.coords.longitude], 15, { duration:0.8 }),
-        () => map.flyTo([21.0285,105.8542], 13, { duration:0.8 })
-      );
+      navigator.geolocation.getCurrentPosition(p => {
+        const { latitude, longitude } = p.coords;
+        map.flyTo([latitude, longitude], 15, { duration:0.8 });
+        updateDistancesFromCoords(latitude, longitude);
+      }, () => map.flyTo([21.0285,105.8542], 13, { duration:0.8 }));
     }
   });
+
+  // Passive live tracking — updates distances as user moves
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(
+      ({ coords }) => updateDistancesFromCoords(coords.latitude, coords.longitude),
+      () => {}
+    );
+  }
 
   (async () => {
     const user = await authGuard();

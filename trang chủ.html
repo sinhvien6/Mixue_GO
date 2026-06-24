@@ -174,12 +174,16 @@
 <script src="shared/app.js"></script>
 <script>
   const STORES = [
-    { id:'xuan-thuy',    name:'Mixue Xuân Thủy',    addr:'144 Xuân Thủy, Cầu Giấy',  dist:'0.4 km', hours:'08:00–22:00',
+    { id:'xuan-thuy',    name:'Mixue Xuân Thủy',   addr:'144 Xuân Thủy, Cầu Giấy',       lat:21.0341, lng:105.7968, dist:'0.4 km', hours:'08:00–22:00',
       img:'https://lh3.googleusercontent.com/aida-public/AB6AXuCTDf09t5_NHxr3pozES-vHMjhL6SpCeL7xI4LNmQQ_nmQn18UDGVhhMri9sKaO4f6368IY41qIM6ZMqBOJfxXEKJXY-80ChTOp2xESSA9sJVYhA_T25JT8ibyJS-i3q8fs_2Cq5yR6WDOeXbG_NJxUix-ksCnB7ysbHzEqZDe4BeDxaBFQebm8cKZTCqEdr1POa1ikFknXf6h9YfrXz_xbxPVIv5z_pAR-iBMUB7BSnDlixirnxITl1U-sIj-n3NJEoxTcvqaeJWQ' },
-    { id:'kim-ma',       name:'Mixue Kim Mã',        addr:'77 Kim Mã, Ba Đình',        dist:'1.2 km', hours:'08:00–23:00',
+    { id:'kim-ma',       name:'Mixue Kim Mã',        addr:'77 Kim Mã, Ba Đình',             lat:21.0337, lng:105.8321, dist:'1.2 km', hours:'08:00–23:00',
       img:'https://lh3.googleusercontent.com/aida-public/AB6AXuC_HEmx3iiQ0ozxagZE7MmG0TRKqJKwehN7UBBKe6U93t9MfPyVKuT_zEP6BV7tpBMEU8QexFh2D33Ur2t1etz-chhpXxpFGzcW3sqcxfh_1gak9fsZTcUAv9R_fwJC-nIH3xike8xAFVzPjKtbsz2vJk37A4ZXBXpo5PnAPa74rHerK6ww4Ij79jz8Y-G1XQH6MHBBInYQPMTvCaOZUjMb4wVsjT5N7tHXQ_6uKMoqV2p8GsLEzuVkibS7UvblYy96bnNgMROmbp4' },
-    { id:'tay-son',      name:'Mixue Tây Sơn',       addr:'165 Tây Sơn, Đống Đa',      dist:'2.1 km', hours:'07:30–22:30',
+    { id:'hang-bong',    name:'Mixue Hàng Bông',     addr:'28 Hàng Bông, Hoàn Kiếm',       lat:21.0338, lng:105.8487, dist:'1.8 km', hours:'08:00–22:30', img:'' },
+    { id:'tay-son',      name:'Mixue Tây Sơn',       addr:'165 Tây Sơn, Đống Đa',          lat:21.0197, lng:105.8419, dist:'2.1 km', hours:'07:30–22:30',
       img:'https://lh3.googleusercontent.com/aida-public/AB6AXuAaoG2WTh5McsZkcm0wIPn6Kq4kFGJFyLPdVXrrpRe1OQclbft4V5ViaWjc9OSRcrX13kMISP4pKKGgQxV2x9lSqnPWBuJwZTS-aNQpeShIA5ygN8M_up0WSkwTEfJfJcUXjV3MhnqNsy-YTc0gAcUn_N34paiH5AxWV17mG4uxeJ8apDXhqeJobNUA8QBa6yGTm2mhZe2_M-OhhrJli0lBXcKpyjeiNP68mxL91y9IUxWtdSX74hyaCJRhjed2E74sJlTvMv5AIZo' },
+    { id:'le-van-luong', name:'Mixue Lê Văn Lương',  addr:'59 Lê Văn Lương, Thanh Xuân',  lat:21.0072, lng:105.8103, dist:'3.5 km', hours:'08:00–22:00', img:'' },
+    { id:'minh-khai',    name:'Mixue Minh Khai',     addr:'312 Minh Khai, Hai Bà Trưng',   lat:21.0039, lng:105.8607, dist:'4.1 km', hours:'08:00–22:00', img:'' },
+    { id:'nguyen-trai',  name:'Mixue Nguyễn Trãi',   addr:'363 Nguyễn Trãi, Thanh Xuân',  lat:20.9987, lng:105.8233, dist:'5.0 km', hours:'08:00–22:00', img:'' },
   ];
 
   function storeCard(store, traffic) {
@@ -237,6 +241,20 @@
       document.getElementById('store-list').innerHTML =
         STORES.map(s => storeCard(s, traffic)).join('');
     } catch (e) { console.warn('store render failed', e); }
+
+    // ── Step 3b: Update distances from real location if permitted ─────────────
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(({ coords }) => {
+        const traffic = getTrafficLevel(new Date().getHours());
+        STORES.forEach(s => {
+          s.distKm = haversineKm(coords.latitude, coords.longitude, s.lat, s.lng);
+          s.dist   = fmtDist(s.distKm);
+        });
+        STORES.sort((a, b) => (a.distKm ?? 999) - (b.distKm ?? 999));
+        document.getElementById('store-list').innerHTML =
+          STORES.map(s => storeCard(s, traffic)).join('');
+      }, () => {}); // silent — keep hardcoded fallback on denial
+    }
 
     // ── Step 4: Load full user data from Firestore ────────────────────────────
     let data = null;
